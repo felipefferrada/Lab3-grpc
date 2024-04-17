@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 
@@ -9,35 +10,26 @@ import (
 	"google.golang.org/grpc"
 )
 
-// Define una estructura que implementa el servicio gRPC
 type server struct {
-	pb.UnimplementedRegionalServerServer
+	pb.UnimplementedChatServiceServer
 }
 
-// Implementa el método ReceiveMessage del servicio gRPC
-func (s *server) ReceiveMessage(ctx context.Context, in *pb.Message) (*pb.Response, error) {
-	log.Printf("Received message: %v", in.Content)
-	return &pb.Response{Message: "Message received"}, nil
+func (s *server) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Message, error) {
+	log.Printf("Mensaje recibido: %s", msg.GetText())
+	return &pb.Message{Text: "Mensaje recibido"}, nil
 }
 
 func main() {
-	// Define el puerto en el que el servidor escuchará las conexiones
-	port := ":50051"
-
-	// Crea un nuevo servidor gRPC
-	lis, err := net.Listen("tcp", port)
+	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("Failed to listen on port %v: %v", port, err)
+		log.Fatalf("Error al iniciar el servidor: %v", err)
 	}
+
 	s := grpc.NewServer()
+	pb.RegisterChatServiceServer(s, &server{})
 
-	// Registra el servicio en el servidor gRPC
-	pb.RegisterRegionalServerServer(s, &server{})
-
-	log.Printf("Server listening on port %v", port)
-
-	// Inicia el servidor gRPC
+	fmt.Println("Servidor gRPC iniciado en el puerto :50051")
 	if err := s.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+		log.Fatalf("Error al servir: %v", err)
 	}
 }
