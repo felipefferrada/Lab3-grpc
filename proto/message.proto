@@ -1,4 +1,5 @@
 syntax = "proto3";
 package grpc;
 
-option go_package 
+option go_package = "https://github.com/felipefferrada/Lab3-grpc/tree/master/proto";
+
