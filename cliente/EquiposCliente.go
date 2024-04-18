@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"math/rand"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -26,15 +28,27 @@ func sendMessage(client pb.ChatServiceClient, wg *sync.WaitGroup, id int, messag
 			log.Fatalf("Error al enviar mensaje: %v", err)
 		}
 
+		//message contiene la solicitud (ID equipo, at, mp)
+		listaMensaje := strings.Split(message, ",")
+		idEquipo, err0 := strconv.Atoi(listaMensaje[0])
+		solAT, err1 := strconv.Atoi(listaMensaje[1])
+		solMP, err2 := strconv.Atoi(listaMensaje[2])
+
+		if err0 != nil || err1 != nil || err2 != nil {
+			log.Fatalf("%v", err0)
+		}
 		//el print con la respuesta y la solicitud
 		fmt.Printf("Hebra %d - Respuesta del servidor: %s\n", id, resp.GetText())
-		fmt.Printf("Negativo: Solicitando 22 AT y 13 MP ; Resolucion: -- DENEGADA -- ;\nReintentando en 3 segs...")
+		//fmt.Printf("Negativo: Solicitando 22 AT y 13 MP ; Resolucion: -- DENEGADA -- ;\nReintentando en 3 segs...")
 
 		// Dependiendo de la respuesta, decide si enviar otro mensaje o terminar la hebra
 		if resp.GetText() == "true" || resp.GetText() == "1" {
 			responseCh <- true // Indica que la hebra debe terminar
-			fmt.Printf("Positivo: Solicitando 22 AT y 13 MP ; Resolucion: -- APROBADA -- ;\nConquista Exitosa!, cerrando comunicaci´on")
+			fmt.Printf("Equipo %d Solicitando %d AT y %d MP ; Resolucion: -- APROBADA -- ;\nConquista Exitosa!, cerrando comunicacion", idEquipo, solAT, solMP)
 			return
+		} else {
+			fmt.Printf("Equipo %d Solicitando %d AT y %d MP ; Resolucion: -- DENEGADA -- ;\nReintentando en 3 segs...", idEquipo, solAT, solMP)
+
 		}
 
 		time.Sleep(3 * time.Second) // Espera 3 segundos antes de enviar otro mensaje

@@ -24,9 +24,13 @@ func solicitarM(ID int, AT int, MP int) bool {
 	if AT <= cantAT && MP <= cantMP { //es posible entregar
 		cantAT -= AT
 		cantMP -= MP
+		fmt.Printf("Recepcion de solicitud desde equipo %d, %d AT y %d MP -- APROBADA --\n", ID, AT, MP)
+		fmt.Printf("AT EN SISTEMA: %d ; MP EN SISTEMA: %d \n", cantAT, cantMP)
 		//printeo solicitud
 		return true
 	} else {
+		fmt.Printf("Recepcion de solicitud desde equipo %d, %d AT y %d MP -- DENEGADA --", ID, AT, MP)
+		fmt.Printf("AT EN SISTEMA: %d ; MP EN SISTEMA: %d \n", cantAT, cantMP)
 		//printeo
 		return false
 	}
@@ -61,18 +65,19 @@ func (s *server) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Message,
 		log.Fatalf("%v", err0)
 	}
 
-	solicitarM(idEquipo, solAT, solMP)
+	respuesta := solicitarM(idEquipo, solAT, solMP)
 
 	log.Printf("Mensaje recibido: %s", msgEquipo)
 
 	// Aquí puedes procesar el mensaje según sea necesario
 	// En este ejemplo, si el mensaje contiene "Terminar", el servidor enviará una respuesta para que la hebra del cliente se detenga
-	if msg.GetText() == "Terminar" {
-		return &pb.Message{Text: "Terminar"}, nil
+	if respuesta {
+		return &pb.Message{Text: "true"}, nil
+	} else {
+		// Si no es un mensaje para terminar, el servidor simplemente devuelve un mensaje de confirmación
+		return &pb.Message{Text: "false"}, nil
 	}
 
-	// Si no es un mensaje para terminar, el servidor simplemente devuelve un mensaje de confirmación
-	return &pb.Message{Text: "Mensaje recibido"}, nil
 }
 
 func main() {
