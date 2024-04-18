@@ -28,10 +28,12 @@ func sendMessage(client pb.ChatServiceClient, wg *sync.WaitGroup, id int, messag
 
 		//el print con la respuesta y la solicitud
 		fmt.Printf("Hebra %d - Respuesta del servidor: %s\n", id, resp.GetText())
+		fmt.Printf("Negativo: Solicitando 22 AT y 13 MP ; Resolucion: -- DENEGADA -- ;\nReintentando en 3 segs...")
 
 		// Dependiendo de la respuesta, decide si enviar otro mensaje o terminar la hebra
 		if resp.GetText() == "true" || resp.GetText() == "1" {
 			responseCh <- true // Indica que la hebra debe terminar
+			fmt.Printf("Positivo: Solicitando 22 AT y 13 MP ; Resolucion: -- APROBADA -- ;\nConquista Exitosa!, cerrando comunicaci´on")
 			return
 		}
 
@@ -52,7 +54,7 @@ func main() {
 	responseCh := make(chan bool)
 
 	// Inicia cuatro hebras concurrentes
-	//el mensaje enviado es tipo (Equipo, cantAT, cantMP)
+	//el mensaje enviado es tipo (id Equipo, cantAT, cantMP)
 	for i := 0; i < 4; i++ {
 		wg.Add(1)
 		go sendMessage(client, &wg, i+1, fmt.Sprintf("%d, %d, %d", i+1, rand.Intn(30-20+1)+20, rand.Intn(15-10+1)+10), responseCh)
