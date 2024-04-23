@@ -7,14 +7,18 @@ import (
 	"net"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	pb "github.com/felipefferrada/Lab3-grpc/proto"
 	"google.golang.org/grpc"
 )
 
-var cantAT int = 0
-var cantMP int = 0
+var (
+	cantAT int = 0
+	cantMP int = 0
+	mu     sync.Mutex
+)
 
 type server struct {
 	pb.UnimplementedChatServiceServer
@@ -55,8 +59,10 @@ func abastecerAlmacen() {
 }
 
 func (s *server) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Message, error) {
+	mu.Lock()
+	defer mu.Unlock()
 	msgEquipo := msg.GetText()
-	solicitud := strings.Split(msgEquipo, ",")
+	solicitud := strings.Split(msgEquipo, ", ")
 	idEquipo, err0 := strconv.Atoi(solicitud[0])
 	solAT, err1 := strconv.Atoi(solicitud[1])
 	solMP, err2 := strconv.Atoi(solicitud[2])
@@ -66,11 +72,9 @@ func (s *server) SendMessage(ctx context.Context, msg *pb.Message) (*pb.Message,
 	}
 
 	respuesta := solicitarM(idEquipo, solAT, solMP)
-
-	log.Printf("Mensaje recibido: %s", msgEquipo)
+	//log.Printf("Mensaje recibido: %s", msgEquipo)
 
 	// Aquí puedes procesar el mensaje según sea necesario
-	// En este ejemplo, si el mensaje contiene "Terminar", el servidor enviará una respuesta para que la hebra del cliente se detenga
 	if respuesta {
 		return &pb.Message{Text: "true"}, nil
 	} else {
@@ -89,11 +93,12 @@ func main() {
 	s := grpc.NewServer()
 	pb.RegisterChatServiceServer(s, &server{})
 
+	//generacion de municion en almacen
+	go abastecerAlmacen()
+
 	fmt.Println("Servidor gRPC iniciado en el puerto :50051")
 	if err := s.Serve(lis); err != nil {
 		log.Fatalf("Error al servir: %v", err)
 	}
 
-	//generacion de municion en almacen
-	go abastecerAlmacen()
 }

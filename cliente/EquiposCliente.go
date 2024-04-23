@@ -20,16 +20,20 @@ const (
 
 func sendMessage(client pb.ChatServiceClient, wg *sync.WaitGroup, id int, message string, responseCh chan<- bool) {
 	defer wg.Done()
+	fmt.Printf(message + "\n")
 
 	for {
 		msg := &pb.Message{Text: message}
 		resp, err := client.SendMessage(context.Background(), msg)
+
 		if err != nil {
-			log.Fatalf("Error al enviar mensaje: %v", err)
+			log.Printf("Error al enviar mensaje: %v", err)
+			time.Sleep(time.Second) // Reintentar después de un descanso.
+			continue
 		}
 
 		//message contiene la solicitud (ID equipo, at, mp)
-		listaMensaje := strings.Split(message, ",")
+		listaMensaje := strings.Split(message, ", ")
 		idEquipo, err0 := strconv.Atoi(listaMensaje[0])
 		solAT, err1 := strconv.Atoi(listaMensaje[1])
 		solMP, err2 := strconv.Atoi(listaMensaje[2])
@@ -38,8 +42,7 @@ func sendMessage(client pb.ChatServiceClient, wg *sync.WaitGroup, id int, messag
 			log.Fatalf("%v", err0)
 		}
 		//el print con la respuesta y la solicitud
-		fmt.Printf("Hebra %d - Respuesta del servidor: %s\n", id, resp.GetText())
-		//fmt.Printf("Negativo: Solicitando 22 AT y 13 MP ; Resolucion: -- DENEGADA -- ;\nReintentando en 3 segs...")
+		//fmt.Printf("Hebra %d - Respuesta del servidor: %s\n", id, resp.GetText())
 
 		// Dependiendo de la respuesta, decide si enviar otro mensaje o terminar la hebra
 		if resp.GetText() == "true" || resp.GetText() == "1" {
